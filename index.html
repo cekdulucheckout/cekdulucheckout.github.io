@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cekdulu.checkout — Kurasi Barang Estetik & Fungsional</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-color: #FAF7F2;
+      --surface-color: #FFFFFF;
+      --text-primary: #2C2621;
+      --text-secondary: #756B62;
+      --accent-wood: #A67B5B;
+      --accent-wood-light: #EFE7DD;
+      --border-color: #EAE2D7;
+      --radius-xl: 20px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 4px 16px rgba(44, 38, 33, 0.05);
+      --shadow-hover: 0 8px 24px rgba(44, 38, 33, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 48px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* Profil Brand */
+    .profile-section {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .avatar-ring {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, var(--accent-wood), #D4B59E);
+      margin: 0 auto 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: var(--text-primary);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      overflow: hidden;
+    }
+
+    .avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .brand-handle {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-wood);
+      background-color: var(--accent-wood-light);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .brand-bio {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    /* Daftar Kartu Niche */
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    .niche-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .niche-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background-color: var(--surface-color);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      text-decoration: none;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .niche-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-wood);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .niche-card.featured {
+      border-color: var(--accent-wood);
+      background: linear-gradient(to right, #FFFFFF, #FDFBF7);
+    }
+
+    .niche-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background-color: var(--accent-wood-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .niche-content {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .niche-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+      flex-wrap: wrap;
+    }
+
+    .niche-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .badge-live {
+      font-size: 10px;
+      font-weight: 700;
+      background-color: #DCFCE7;
+      color: #15803D;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .badge-soon {
+      font-size: 10px;
+      font-weight: 700;
+      background-color: #F3EFEA;
+      color: var(--text-secondary);
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .niche-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .niche-arrow {
+      font-size: 18px;
+      color: var(--accent-wood);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Sosial Media / Pinterest */
+    .social-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 16px;
+      border-radius: 999px;
+      transition: all 0.2s;
+    }
+
+    .social-btn:hover {
+      border-color: var(--text-primary);
+      background-color: var(--text-primary);
+      color: #FFFFFF;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="wrapper">
+    <!-- Header Profil -->
+    <section class="profile-section">
+      <div class="avatar-ring">
+        <div class="avatar-inner">
+          <!-- Jika ingin memakai foto profil asli, hapus teks "cc." di bawah dan aktifkan tag <img> ini: -->
+          <!-- <img src="logo.jpg" alt="cekdulu.checkout" /> -->
+          cc.
+        </div>
+      </div>
+      <h1 class="brand-name">cekdulu.checkout</h1>
+      <span class="brand-handle">@cekduluaja</span>
+      <p class="brand-bio">Kurasi barang estetik, fungsional & ramah kantong. Pilih kategori katalog di bawah untuk cek produknya di Shopee.</p>
+    </section>
+
+    <!-- Navigasi Katalog Niche -->
+    <div class="section-label">Pilih Katalog Produk</div>
+    <div class="niche-list">
+
+      <!-- 1. Niche Aktif: Ide Dapur Kos -->
+      <a href="https://cekdulucheckout.github.io/ide-dapur-kos/" class="niche-card featured">
+        <div class="niche-icon">🍳</div>
+        <div class="niche-content">
+          <div class="niche-title-row">
+            <span class="niche-title">Ide Dapur Kos</span>
+            <span class="badge-live">Aktif</span>
+          </div>
+          <p class="niche-desc">Peralatan masak minimalis, wadah bumbu, rak hemat tempat & non-elektronik.</p>
+        </div>
+        <span class="niche-arrow">→</span>
+      </a>
+
+      <!-- 2. Niche Mendatang: Gadget & Elektronik -->
+      <a href="#coming-soon" class="niche-card" onclick="alert('Katalog Gadget & Elektronik sedang dalam tahap kurasi!'); return false;">
+        <div class="niche-icon">🎧</div>
+        <div class="niche-content">
+          <div class="niche-title-row">
+            <span class="niche-title">Gadget & Elektronik</span>
+            <span class="badge-soon">Segera Hadir</span>
+          </div>
+          <p class="niche-desc">Aksesori meja kerja, perangkat pintar harian & elektronik fungsional.</p>
+        </div>
+        <span class="niche-arrow">→</span>
+      </a>
+
+      <!-- 3. Niche Mendatang: Pakaian & Outfit -->
+      <a href="#coming-soon" class="niche-card" onclick="alert('Katalog Pakaian & Outfit sedang dalam tahap kurasi!'); return false;">
+        <div class="niche-icon">👕</div>
+        <div class="niche-content">
+          <div class="niche-title-row">
+            <span class="niche-title">Pakaian & Outfit</span>
+            <span class="badge-soon">Segera Hadir</span>
+          </div>
+          <p class="niche-desc">Inspirasi outfit harian simpel, tas, dan kebutuhan gaya minimalis.</p>
+        </div>
+        <span class="niche-arrow">→</span>
+      </a>
+
+    </div>
+
+    <!-- Tautan Sosial Media -->
+    <div class="social-row">
+      <!-- Ganti # dengan link profil Pinterest kamu -->
+      <a href="https://id.pinterest.com/" target="_blank" rel="noopener noreferrer" class="social-btn">
+        📌 Pinterest
+      </a>
+      <!-- Tambahkan tautan media sosial lain jika sudah siap -->
+      <a href="https://www.tiktok.com/@cekduluaja" target="_blank" rel="noopener noreferrer" class="social-btn">
+        🎵 TikTok
+      </a>
+    </div>
+
+    <footer>
+      <p>© 2026 cekdulu.checkout • Shopee Affiliate Curated Links</p>
+    </footer>
+  </main>
+
+</body>
+</html>
