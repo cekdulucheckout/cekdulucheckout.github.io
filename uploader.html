@@ -309,7 +309,6 @@
     const fileInput = document.getElementById("fileInput");
     const resultList = document.getElementById("resultList");
 
-    // Muat pengaturan tersimpan dari LocalStorage browser
     function loadConfig() {
       const saved = JSON.parse(localStorage.getItem("gh_uploader_cfg") || "{}");
       if (saved.user) ghUser.value = saved.user;
@@ -343,10 +342,9 @@
       configBadge.textContent = "Siap Digunakan";
       configBadge.classList.add("ready");
       settingsBody.classList.add("hidden");
-      alert("Pengaturan berhasil disimpan di browser ini!");
+      alert("Pengaturan berhasil disimpan!");
     });
 
-    // Klik & Drag-Drop File
     dropzone.addEventListener("click", () => fileInput.click());
     dropzone.addEventListener("dragover", (e) => {
       e.preventDefault();
@@ -360,17 +358,41 @@
     });
     fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
 
-    // Konversi file ke Base64
-    function toBase64(file) {
+    // Fungsi Kompresi Gambar Otomatis (Max 800px, Kualitas 80%, format WebP/JPG ringan)
+    function compressImage(file, maxSize = 800, quality = 0.8) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let { width, height } = img;
+
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            } else {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Konversi ke WebP (jauh lebih ringan dari JPG tapi tetap tajam)
+          const dataUrl = canvas.toDataURL("image/webp", quality);
+          const base64 = dataUrl.split(",")[1];
+          resolve({ base64, ext: "webp" });
+        };
+        img.onerror = reject;
+        img.src = url;
       });
     }
 
-    // Proses Upload ke GitHub API
     async function handleFiles(files) {
       const cfg = JSON.parse(localStorage.getItem("gh_uploader_cfg") || "{}");
       if (!cfg.user || !cfg.repo || !cfg.token) {
@@ -382,32 +404,30 @@
       for (const file of files) {
         if (!file.type.startsWith("image/")) continue;
 
-        // Buat nama file aman + timestamp agar tidak pernah bentrok
-        const ext = file.name.split(".").pop().toLowerCase();
         const cleanBase = file.name
           .replace(/\.[^/.]+$/, "")
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "-")
           .replace(/-+/g, "-")
           .slice(0, 25);
-        const finalName = `${cleanBase}-${Date.now().toString().slice(-4)}.${ext}`;
-        const filePath = cfg.folder ? `${cfg.folder}/${finalName}` : finalName;
 
-        // Tampilkan kartu status di layar
         const itemEl = document.createElement("div");
         itemEl.className = "result-item";
         const previewUrl = URL.createObjectURL(file);
         itemEl.innerHTML = `
           <img src="${previewUrl}" class="result-thumb" />
           <div class="result-info">
-            <div class="result-name">${finalName}</div>
-            <div class="status-text">Sedang mengunggah ke GitHub...</div>
+            <div class="result-name">${cleanBase}</div>
+            <div class="status-text">Mengompres & mengunggah...</div>
           </div>
         `;
         resultList.prepend(itemEl);
 
         try {
-          const base64Content = await toBase64(file);
+          // Kompres foto sebelum dikirim ke GitHub
+          const { base64, ext } = await compressImage(file);
+          const finalName = `${cleanBase}-${Date.now().toString().slice(-4)}.${ext}`;
+          const filePath = cfg.folder ? `${cfg.folder}/${finalName}` : finalName;
           const apiUrl = `https://api.github.com/repos/${cfg.user}/${cfg.repo}/contents/${filePath}`;
 
           const res = await fetch(apiUrl, {
@@ -417,8 +437,8 @@
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              message: `Upload gambar produk ${finalName}`,
-              content: base64Content
+              message: `Upload gambar terkompresi ${finalName}`,
+              content: base64
             })
           });
 
@@ -427,13 +447,12 @@
             throw new Error(errData.message || "Gagal upload");
           }
 
-          // Link publik GitHub Pages
           const publicUrl = `https://${cfg.user}.github.io/${cfg.repo}/${filePath}`;
 
           itemEl.innerHTML = `
             <img src="${previewUrl}" class="result-thumb" />
             <div class="result-info">
-              <div class="result-name">${finalName}</div>
+              <div class="result-name">${finalName} (Super Ringan ✓)</div>
               <input type="text" class="result-url" value="${publicUrl}" readonly />
             </div>
             <button class="btn-copy" onclick="copyLink(this, '${publicUrl}')">Salin Link</button>
