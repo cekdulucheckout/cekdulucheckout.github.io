@@ -393,12 +393,18 @@
       text-overflow: ellipsis;
     }
 
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .btn-shopee {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
-      width: 100%;
+      flex: 1;
       padding: 9px 8px;
       background-color: var(--shopee-orange);
       color: #FFFFFF;
@@ -413,6 +419,33 @@
     .btn-shopee:active,
     .btn-shopee:hover {
       background-color: var(--shopee-orange-hover);
+    }
+
+    .btn-share {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-share:active,
+    .btn-share:hover {
+      border-color: var(--accent-wood);
+      background-color: var(--accent-wood-light);
+    }
+
+    .btn-share.copied {
+      background-color: #DCFCE7;
+      border-color: #16A34A;
+      color: #15803D;
     }
 
     @media (min-width: 640px) {
@@ -618,7 +651,26 @@
       return rows;
     }
 
+    // Cek apakah pengunjung membuka link bagikan produk spesifik (?cari=...)
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const sharedQuery = params.get("cari");
+      const sharedNiche = params.get("niche");
+
+      if (sharedNiche) {
+        activeNiche = sharedNiche;
+        document.querySelectorAll(".niche-tab").forEach((t) => {
+          t.classList.toggle("active", t.dataset.niche.toLowerCase() === sharedNiche.toLowerCase());
+        });
+      }
+      if (sharedQuery) {
+        searchQuery = sharedQuery;
+        searchInput.value = sharedQuery;
+      }
+    }
+
     async function loadProducts() {
+      checkUrlParams();
       try {
         const cacheBuster = SHEET_CSV_URL.includes("?") ? "&t=" + Date.now() : "?t=" + Date.now();
         const response = await fetch(SHEET_CSV_URL + cacheBuster);
@@ -684,6 +736,40 @@
       activeCategory = "Semua";
     }
 
+    // Fungsi Bagikan / Salin Link Produk
+    async function shareProduct(btn, name, code, niche) {
+      const baseUrl = window.location.origin + window.location.pathname;
+      const queryParam = code ? code : name;
+      const shareUrl = `${baseUrl}?niche=${encodeURIComponent(niche)}&cari=${encodeURIComponent(queryParam)}`;
+      const shareText = `Cek rekomendasi "${name}" di cekdulu.checkout:`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: name,
+            text: shareText,
+            url: shareUrl
+          });
+          return;
+        } catch (err) {
+          // Jika dibatalkan user, lanjut ke salin clipboard
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        const originalHtml = btn.innerHTML;
+        btn.classList.add("copied");
+        btn.innerHTML = "✓";
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.innerHTML = originalHtml;
+        }, 1800);
+      } catch (e) {
+        prompt("Salin link produk ini:", shareUrl);
+      }
+    }
+
     function renderProducts() {
       const nicheItems = allProducts.filter(
         (item) => item.niche.toLowerCase() === activeNiche.toLowerCase()
@@ -723,6 +809,11 @@
       filtered.forEach((item) => {
         const card = document.createElement("article");
         card.className = "card";
+
+        const safeName = item.name.replace(/'/g, "\\'");
+        const safeCode = item.code.replace(/'/g, "\\'");
+        const safeNiche = item.niche.replace(/'/g, "\\'");
+
         card.innerHTML = `
           <div class="card-image-wrap">
             <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/400x400/EFE7DD/A67B5B?text=Foto+Produk'" />
@@ -733,9 +824,20 @@
             <span class="card-category">${item.category}</span>
             <h2 class="card-title">${item.name}</h2>
             <div class="card-price">${item.price}</div>
-            <a href="${item.shopeeLink}" target="_blank" rel="noopener noreferrer nofollow" class="btn-shopee">
-              Beli di Shopee ↗
-            </a>
+            <div class="card-actions">
+              <a href="${item.shopeeLink}" target="_blank" rel="noopener noreferrer nofollow" class="btn-shopee">
+                Beli di Shopee ↗
+              </a>
+              <button type="button" class="btn-share" title="Bagikan produk ini" aria-label="Bagikan produk" onclick="shareProduct(this, '${safeName}', '${safeCode}', '${safeNiche}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+              </button>
+            </div>
           </div>
         `;
         productGrid.appendChild(card);
@@ -750,6 +852,8 @@
       activeNiche = btn.dataset.niche;
       searchQuery = "";
       searchInput.value = "";
+      // Bersihkan parameter URL jika user berpindah niche manual
+      window.history.replaceState({}, "", window.location.pathname);
       updateCategoryPills();
       renderProducts();
     });
@@ -771,6 +875,7 @@
       searchQuery = "";
       searchInput.value = "";
       activeCategory = "Semua";
+      window.history.replaceState({}, "", window.location.pathname);
       document.querySelectorAll(".pill").forEach((p) => {
         p.classList.toggle("active", p.dataset.category === "Semua");
       });
