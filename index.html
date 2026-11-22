@@ -274,6 +274,27 @@
       margin: 12px 0 10px;
       font-size: 12px;
       color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sort-select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--surface-color);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .sort-select:focus {
+      border-color: var(--accent-wood);
     }
 
     /* Grid Produk Mobile-First (2 Kolom Rapi di HP) */
@@ -586,6 +607,11 @@
   <main class="container">
     <div class="result-meta">
       <span id="productCount">Memuat katalog produk...</span>
+      <select id="sortSelect" class="sort-select" aria-label="Urutkan produk">
+        <option value="newest">Terbaru</option>
+        <option value="cheapest">Harga: Termurah</option>
+        <option value="expensive">Harga: Termahal</option>
+      </select>
     </div>
 
     <div class="product-grid" id="productGrid"></div>
@@ -604,7 +630,7 @@
     <p>© 2026 cekdulu.checkout • Tautan di halaman ini adalah tautan affiliate Shopee.</p>
   </footer>
 
-  <script>
+ <script>
     // =========================================================================
     // TEMPEL LINK CSV GOOGLE SHEETS KAMU DI BAWAH INI:
     // =========================================================================
@@ -614,12 +640,14 @@
     let activeNiche = "Ide Dapur Kos";
     let activeCategory = "Semua";
     let searchQuery = "";
+    let sortBy = "newest";
 
     const productGrid = document.getElementById("productGrid");
     const searchInput = document.getElementById("searchInput");
     const nicheTabs = document.getElementById("nicheTabs");
     const categoryPills = document.getElementById("categoryPills");
     const productCount = document.getElementById("productCount");
+    const sortSelect = document.getElementById("sortSelect");
     const loadingState = document.getElementById("loadingState");
     const emptyState = document.getElementById("emptyState");
     const emptyMessage = document.getElementById("emptyMessage");
@@ -660,7 +688,14 @@
       return rows;
     }
 
-    // Cek apakah pengunjung membuka link bagikan produk spesifik (?cari=...)
+    // Mengubah teks harga (misal "Mulai Rp48.000") menjadi angka murni (48000) untuk pengurutan
+    function extractNumericPrice(priceStr) {
+      if (!priceStr) return 0;
+      const firstPricePart = priceStr.split("-")[0];
+      const digitsOnly = firstPricePart.replace(/[^0-9]/g, "");
+      return digitsOnly ? parseInt(digitsOnly, 10) : 0;
+    }
+
     function checkUrlParams() {
       const params = new URLSearchParams(window.location.search);
       const sharedQuery = params.get("cari");
@@ -710,6 +745,7 @@
             name: row[idxName] || "",
             category: row[idxCat] || "Umum",
             price: row[idxPrice] || "",
+            numericPrice: extractNumericPrice(row[idxPrice] || ""),
             tag: row[idxTag] || "",
             image: row[idxImg] || "",
             shopeeLink: row[idxLink] || "#",
@@ -745,7 +781,6 @@
       activeCategory = "Semua";
     }
 
-    // Fungsi Bagikan / Salin Link Produk
     async function shareProduct(btn, name, code, niche) {
       const baseUrl = window.location.origin + window.location.pathname;
       const queryParam = code ? code : name;
@@ -760,9 +795,7 @@
             url: shareUrl
           });
           return;
-        } catch (err) {
-          // Jika dibatalkan user, lanjut ke salin clipboard
-        }
+        } catch (err) {}
       }
 
       try {
@@ -784,7 +817,7 @@
         (item) => item.niche.toLowerCase() === activeNiche.toLowerCase()
       );
 
-      const filtered = nicheItems.filter((item) => {
+      let filtered = nicheItems.filter((item) => {
         const matchCat =
           activeCategory === "Semua" ||
           item.category.toLowerCase() === activeCategory.toLowerCase();
@@ -797,6 +830,13 @@
         return matchCat && matchSearch;
       });
 
+      // Logika Urutkan Harga
+      if (sortBy === "cheapest") {
+        filtered = [...filtered].sort((a, b) => a.numericPrice - b.numericPrice);
+      } else if (sortBy === "expensive") {
+        filtered = [...filtered].sort((a, b) => b.numericPrice - a.numericPrice);
+      }
+
       productGrid.innerHTML = "";
 
       if (filtered.length === 0) {
@@ -808,12 +848,12 @@
           emptyMessage.textContent = "Barang yang kamu cari tidak ditemukan.";
           resetBtn.style.display = "inline-block";
         }
-        productCount.textContent = `0 produk di ${activeNiche}`;
+        productCount.textContent = `0 produk`;
         return;
       }
 
       emptyState.style.display = "none";
-      productCount.textContent = `${activeNiche}: Menampilkan ${filtered.length} produk`;
+      productCount.textContent = `Menampilkan ${filtered.length} produk`;
 
       filtered.forEach((item) => {
         const card = document.createElement("article");
@@ -853,6 +893,11 @@
       });
     }
 
+    sortSelect.addEventListener("change", (e) => {
+      sortBy = e.target.value;
+      renderProducts();
+    });
+
     nicheTabs.addEventListener("click", (e) => {
       const btn = e.target.closest(".niche-tab");
       if (!btn) return;
@@ -861,7 +906,6 @@
       activeNiche = btn.dataset.niche;
       searchQuery = "";
       searchInput.value = "";
-      // Bersihkan parameter URL jika user berpindah niche manual
       window.history.replaceState({}, "", window.location.pathname);
       updateCategoryPills();
       renderProducts();
@@ -884,6 +928,8 @@
       searchQuery = "";
       searchInput.value = "";
       activeCategory = "Semua";
+      sortBy = "newest";
+      sortSelect.value = "newest";
       window.history.replaceState({}, "", window.location.pathname);
       document.querySelectorAll(".pill").forEach((p) => {
         p.classList.toggle("active", p.dataset.category === "Semua");
