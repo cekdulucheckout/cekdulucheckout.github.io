@@ -331,6 +331,25 @@
       box-shadow: var(--shadow-sm);
     }
 
+    .card.is-pinned {
+      border: 1.5px solid var(--accent-wood);
+      background: linear-gradient(to bottom, #FFFFFF, #FDF9F3);
+    }
+
+    .product-pin {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    
     .card-image-wrap {
       position: relative;
       aspect-ratio: 1 / 1;
@@ -688,7 +707,6 @@
       return rows;
     }
 
-    // Mengubah teks harga (misal "Mulai Rp48.000") menjadi angka murni (48000) untuk pengurutan
     function extractNumericPrice(priceStr) {
       if (!priceStr) return 0;
       const firstPricePart = priceStr.split("-")[0];
@@ -738,20 +756,27 @@
         const idxLink = headers.indexOf("shopeelink");
         const idxNiche = headers.indexOf("niche");
         const idxCode = headers.indexOf("code");
+        const idxPinned = headers.indexOf("pinned");
 
         allProducts = rows
           .slice(1)
-          .map((row) => ({
-            name: row[idxName] || "",
-            category: row[idxCat] || "Umum",
-            price: row[idxPrice] || "",
-            numericPrice: extractNumericPrice(row[idxPrice] || ""),
-            tag: row[idxTag] || "",
-            image: row[idxImg] || "",
-            shopeeLink: row[idxLink] || "#",
-            niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Ide Dapur Kos",
-            code: idxCode !== -1 ? (row[idxCode] || "") : ""
-          }))
+          .map((row) => {
+            const rawPin = idxPinned !== -1 ? (row[idxPinned] || "").toLowerCase().trim() : "";
+            const isPinned = ["ya", "yes", "1", "true", "pin", "pinned"].includes(rawPin);
+
+            return {
+              name: row[idxName] || "",
+              category: row[idxCat] || "Umum",
+              price: row[idxPrice] || "",
+              numericPrice: extractNumericPrice(row[idxPrice] || ""),
+              tag: row[idxTag] || "",
+              image: row[idxImg] || "",
+              shopeeLink: row[idxLink] || "#",
+              niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Ide Dapur Kos",
+              code: idxCode !== -1 ? (row[idxCode] || "") : "",
+              pinned: isPinned
+            };
+          })
           .filter((item) => item.name !== "")
           .reverse();
 
@@ -830,11 +855,14 @@
         return matchCat && matchSearch;
       });
 
-      // Logika Urutkan Harga
+      // Logika Urutkan Harga & Pinned
       if (sortBy === "cheapest") {
         filtered = [...filtered].sort((a, b) => a.numericPrice - b.numericPrice);
       } else if (sortBy === "expensive") {
         filtered = [...filtered].sort((a, b) => b.numericPrice - a.numericPrice);
+      } else {
+        // Pada mode default "Terbaru", produk dengan kolom pinned = "ya" selalu tampil paling atas
+        filtered = [...filtered].sort((a, b) => Number(b.pinned) - Number(a.pinned));
       }
 
       productGrid.innerHTML = "";
@@ -857,7 +885,7 @@
 
       filtered.forEach((item) => {
         const card = document.createElement("article");
-        card.className = "card";
+        card.className = item.pinned ? "card is-pinned" : "card";
 
         const safeName = item.name.replace(/'/g, "\\'");
         const safeCode = item.code.replace(/'/g, "\\'");
@@ -867,6 +895,7 @@
           <div class="card-image-wrap">
             <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/400x400/EFE7DD/A67B5B?text=Foto+Produk'" />
             ${item.code ? `<span class="product-code">#${item.code}</span>` : ""}
+            ${item.pinned ? `<span class="product-pin">⭐ Pilihan</span>` : ""}
             ${item.tag ? `<span class="product-tag">${item.tag}</span>` : ""}
           </div>
           <div class="card-body">
