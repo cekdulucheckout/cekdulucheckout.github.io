@@ -324,6 +324,19 @@
       display: block;
     }
 
+    .product-code {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background-color: var(--text-primary);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
     .product-tag {
       position: absolute;
       bottom: 8px;
@@ -628,6 +641,7 @@
         const idxImg = headers.indexOf("image");
         const idxLink = headers.indexOf("shopeelink");
         const idxNiche = headers.indexOf("niche");
+        const idxCode = headers.indexOf("code");
 
         allProducts = rows
           .slice(1)
@@ -638,7 +652,8 @@
             tag: row[idxTag] || "",
             image: row[idxImg] || "",
             shopeeLink: row[idxLink] || "#",
-            niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Ide Dapur Kos"
+            niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Ide Dapur Kos",
+            code: idxCode !== -1 ? (row[idxCode] || "") : ""
           }))
           .filter((item) => item.name !== "")
           .reverse();
@@ -678,11 +693,12 @@
         const matchCat =
           activeCategory === "Semua" ||
           item.category.toLowerCase() === activeCategory.toLowerCase();
-        const q = searchQuery.toLowerCase().trim();
+        const q = searchQuery.toLowerCase().trim().replace(/^#/, "");
         const matchSearch =
           item.name.toLowerCase().includes(q) ||
           item.category.toLowerCase().includes(q) ||
-          (item.tag && item.tag.toLowerCase().includes(q));
+          (item.tag && item.tag.toLowerCase().includes(q)) ||
+          (item.code && item.code.toLowerCase().includes(q));
         return matchCat && matchSearch;
       });
 
@@ -710,6 +726,7 @@
         card.innerHTML = `
           <div class="card-image-wrap">
             <img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.src='https://placehold.co/400x400/EFE7DD/A67B5B?text=Foto+Produk'" />
+            ${item.code ? `<span class="product-code">#${item.code}</span>` : ""}
             ${item.tag ? `<span class="product-tag">${item.tag}</span>` : ""}
           </div>
           <div class="card-body">
