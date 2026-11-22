@@ -671,7 +671,7 @@
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTgFVUYUEYH3dF32c8aYzHoKqvhp8O3PatrhVCWTZaK84q3_9b9d0BHE_iybxEZMTc3s8RXVaXAnEQK/pub?gid=0&single=true&output=csv";
 
     let allProducts = [];
-    let activeNiche = "Ide Dapur Kos";
+    let activeNiche = "Perlengkapan Rumah & Dapur";
     let activeCategory = "Semua";
     let searchQuery = "";
     let sortBy = "newest";
@@ -787,7 +787,7 @@
               tag: row[idxTag] || "",
               image: row[idxImg] || "",
               shopeeLink: row[idxLink] || "#",
-              niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Ide Dapur Kos",
+              niche: (idxNiche !== -1 && row[idxNiche]) ? row[idxNiche] : "Perlengkapan Rumah & Dapur",
               code: idxCode !== -1 ? (row[idxCode] || "") : "",
               pinned: isPinned
             };
